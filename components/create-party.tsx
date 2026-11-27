@@ -4,6 +4,8 @@ import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { ArrowDownRight, ArrowLeft, ArrowRight, Check, Copy, Disc3, Headphones, LoaderCircle, Music2, Radio, Sparkles, Volume2, Waves } from 'lucide-react'
 import { createMockParty } from '@/lib/mock-party'
+import { createClient } from '@/lib/superbase/client'
+import { Button } from '@/components/ui/button'
 
 type Party = ReturnType<typeof createMockParty>
 
@@ -37,6 +39,27 @@ export function CreateParty() {
       window.setTimeout(() => setCopied(false), 1800)
     } catch {
       setError('Clipboard access isn’t available. You can select and copy the code.')
+    }
+  }
+
+  async function handleLogin() {
+    const supabase = createClient()
+    const { error: authError } = await supabase.auth.signInWithOAuth({
+      provider: 'spotify',
+      options: {
+        scopes: [
+          'user-read-email',
+          'user-read-private',
+          'user-read-playback-state',
+          'user-modify-playback-state',
+          'user-read-currently-playing',
+        ].join(' '),
+        redirectTo: `${window.location.origin}/auth/callback`,
+      },
+    })
+
+    if (authError) {
+      setError(`No se pudo conectar con Spotify: ${authError.message}`)
     }
   }
 
@@ -114,6 +137,12 @@ export function CreateParty() {
         </div>
       </section>
 
+      <Button
+      onClick={handleLogin}
+      className="bg-[#1DB954] hover:bg-[#1ed760] text-black font-semibold"
+    >
+      Conectar con Spotify Premium
+    </Button>
       <footer className="relative z-10 flex items-center justify-between border-t border-white/[0.06] px-6 py-5 text-[10px] font-medium tracking-[0.1em] text-white/25 sm:px-10 lg:px-16"><span>GOOD MUSIC, BETTER COMPANY.</span><span>SET THE VIBE <span className="text-[#d4ff4f]">© 2026</span></span></footer>
     </main>
   )
